@@ -1,5 +1,5 @@
 
-local MAJOR, MINOR = 'LibClass-2.0', 8
+local MAJOR, MINOR = 'LibClass-2.0', 9
 local Class = LibStub:NewLibrary(MAJOR, MINOR)
 if not Class then
     return
@@ -24,50 +24,18 @@ local format, wipe, select = string.format, wipe, select
 local CreateFrame = CreateFrame
 
 --[[
-     xpcall safecall implementation
+	 xpcall safecall implementation
 ]]
+local xpcall = xpcall
 
 local function errorhandler(err)
     return geterrorhandler()(err)
 end
 
-local function CreateDispatcher(argCount)
-    local code = [[
-        local xpcall, eh = ...
-        local method, ARGS
-        local function call() return method(ARGS) end
-
-        local function dispatch(func, ...)
-            method = func
-            if not method then return end
-            ARGS = ...
-            return xpcall(call, eh)
-        end
-
-        return dispatch
-    ]]
-
-    local ARGS = {}
-    for i = 1, argCount do
-        ARGS[i] = 'arg' .. i
-    end
-    code = code:gsub('ARGS', tconcat(ARGS, ', '))
-    return assert(loadstring(code, 'safecall Dispatcher[' .. argCount .. ']'))(xpcall, errorhandler)
-end
-
-local Dispatchers = setmetatable({}, {
-    __index = function(self, argCount)
-        local dispatcher = CreateDispatcher(argCount)
-        rawset(self, argCount, dispatcher)
-        return dispatcher
-    end,
-})
-Dispatchers[0] = function(func)
-    return xpcall(func, errorhandler)
-end
-
 local function safecall(func, ...)
-    return Dispatchers[select('#', ...)](func, ...)
+    if type(func) == 'function' then
+        return xpcall(func, errorhandler, ...)
+    end
 end
 
 local function safereturn(success, ...)
@@ -357,6 +325,7 @@ function Class:NewClass(name, ...)
     end
     local class = Class:New(...)
     _Classes[self][name] = class
+    safecall(self.OnClassCreated, self, class, name)
     return class
 end
 
