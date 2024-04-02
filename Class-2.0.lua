@@ -1,5 +1,6 @@
 
 local MAJOR, MINOR = 'LibClass-2.0', 10
+---@class LibClass-2.0
 local Class = LibStub:NewLibrary(MAJOR, MINOR)
 if not Class then
     return
