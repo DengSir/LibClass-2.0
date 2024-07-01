@@ -110,7 +110,9 @@ function Object:GetSuper()
     return self._Meta.__super
 end
 
----@return Object
+---@generic T
+---@param self T
+---@return T
 function Object:GetType()
     return self._Meta.__type
 end
